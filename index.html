@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>فال روزانه</title>
+  <style>
+    body {
+      font-family: Tahoma, sans-serif;
+      text-align: center;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 0;
+    }
+    #date {
+      margin-top: 20px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    button {
+      margin-top: 100px;
+      padding: 15px 30px;
+      font-size: 18px;
+      cursor: pointer;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+    }
+    #fortune {
+      margin-top: 50px;
+      font-size: 22px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div id="date"></div>
+  <button onclick="showFortune()">نمایش فال امروز</button>
+  <div id="fortune"></div>
+
+  <script>
+    // نمایش تاریخ امروز
+    const today = new Date();
+    const todayStr = today.toLocaleDateString("fa-IR");
+    document.getElementById("date").innerText = todayStr;
+
+    // دیتابیس فال‌ها
+    const fortunes = [
+      "امروز فرصت‌های تازه‌ای پیش رویت قرار می‌گیرد.",
+      "بهتر است امروز کمی آرامش داشته باشی.",
+      "یک خبر خوب در راه است.",
+      "به تصمیم‌های کوچک امروزت توجه کن.",
+      "امروز زمان خوبی برای شروع کار جدید است.",
+      "به دوستانت بیشتر توجه کن."
+    ];
+
+    function showFortune() {
+      // بررسی اینکه آیا فال امروز قبلاً ذخیره شده
+      const saved = JSON.parse(localStorage.getItem("dailyFortune"));
+      if (saved && saved.date === todayStr) {
+        document.getElementById("fortune").innerText = saved.text;
+        return;
+      }
+
+      // انتخاب فال تصادفی برای کاربر
+      const index = Math.floor(Math.random() * fortunes.length);
+      const fortune = fortunes[index];
+
+      // ذخیره در localStorage
+      localStorage.setItem("dailyFortune", JSON.stringify({
+        date: todayStr,
+        text: fortune
+      }));
+
+      document.getElementById("fortune").innerText = fortune;
+    }
+  </script>
+</body>
+</html>
