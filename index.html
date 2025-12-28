@@ -7,17 +7,24 @@
     body {
       font-family: Tahoma, sans-serif;
       text-align: center;
-      background: #f9f9f9;
       margin: 0;
       padding: 0;
+      background: #f9f9f9;
     }
+
     #date {
       margin-top: 20px;
       font-size: 20px;
       font-weight: bold;
+      cursor: pointer;
+      display: inline-block;
+      background: #eee;
+      padding: 8px 20px;
+      border-radius: 8px;
     }
+
     button {
-      margin-top: 100px;
+      margin-top: 40px;
       padding: 15px 30px;
       font-size: 18px;
       cursor: pointer;
@@ -26,20 +33,68 @@
       border: none;
       border-radius: 8px;
     }
+
     #fortune {
-      margin-top: 50px;
+      margin-top: 30px;
       font-size: 22px;
       color: #333;
+    }
+
+    /* تقویم */
+    #calendar {
+      margin-top: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+      display: inline-block;
+      padding: 15px;
+      text-align: center;
+    }
+
+    #calendar.hidden {
+      display: none;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .calendar-header button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 40px);
+      gap: 5px;
+    }
+
+    .calendar-days div {
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .calendar-days div:hover {
+      background: #eee;
     }
   </style>
 </head>
 <body>
-  <div id="date"></div>
+  <div id="date" onclick="toggleCalendar()"></div>
   <button onclick="showFortune()">نمایش فال امروز</button>
   <div id="fortune"></div>
+  <div id="calendar" class="hidden"></div>
 
   <script>
-    // نمایش تاریخ امروز
     const today = new Date();
     const todayStr = today.toLocaleDateString("fa-IR");
     document.getElementById("date").innerText = todayStr;
@@ -51,28 +106,116 @@
       "یک خبر خوب در راه است.",
       "به تصمیم‌های کوچک امروزت توجه کن.",
       "امروز زمان خوبی برای شروع کار جدید است.",
-      "به دوستانت بیشتر توجه کن."
+      "به دوستانت بیشتر توجه کن.",
+      "صبوری امروزت نتیجه خوبی خواهد داشت.",
+      "به ندای قلبت گوش بده."
     ];
 
+    // نمایش فال امروز
     function showFortune() {
-      // بررسی اینکه آیا فال امروز قبلاً ذخیره شده
-      const saved = JSON.parse(localStorage.getItem("dailyFortune"));
-      if (saved && saved.date === todayStr) {
-        document.getElementById("fortune").innerText = saved.text;
+      if (fortunes.length === 0) {
+        displayFortune("دیتابیس هنوز بارگذاری نشده.");
+        return;
+      }
+      const index = today.getDate() % fortunes.length;
+      displayFortune(fortunes[index]);
+    }
+
+    function displayFortune(text) {
+      document.getElementById("fortune").innerText = text;
+    }
+
+    /* ---------------- تقویم ---------------- */
+    let currentMonth = today.getMonth();
+    let currentYear = today.getFullYear();
+
+    // تاریخ شروع پروژه: 10 دی 1404 → معادل میلادی 31 دسامبر 2025
+    const projectStart = new Date(2025, 11, 31);
+
+    function toggleCalendar() {
+      const cal = document.getElementById("calendar");
+      cal.classList.toggle("hidden");
+      if (!cal.classList.contains("hidden")) {
+        renderCalendar(currentMonth, currentYear);
+      }
+    }
+
+    function renderCalendar(month, year) {
+      const cal = document.getElementById("calendar");
+      cal.innerHTML = "";
+
+      const header = document.createElement("div");
+      header.className = "calendar-header";
+      header.innerHTML = `
+        <button onclick="prevMonth()">◀</button>
+        <span>${new Date(year, month).toLocaleDateString("fa-IR", { month: 'long', year: 'numeric' })}</span>
+        <button onclick="nextMonth()">▶</button>
+      `;
+      cal.appendChild(header);
+
+      const daysContainer = document.createElement("div");
+      daysContainer.className = "calendar-days";
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      // پر کردن روزهای خالی اول ماه
+      for (let i = 0; i < firstDay; i++) {
+        daysContainer.appendChild(document.createElement("div"));
+      }
+
+      // روزهای ماه
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateObj = new Date(year, month, d);
+
+        // فقط روزهای آینده بعد از شروع پروژه نمایش داده شوند
+        if (dateObj < projectStart) continue;
+
+        const dayDiv = document.createElement("div");
+        dayDiv.innerText = d;
+        dayDiv.onclick = () => {
+          handleDayClick(dateObj);
+        };
+        daysContainer.appendChild(dayDiv);
+      }
+
+      cal.appendChild(daysContainer);
+    }
+
+    function prevMonth() {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      renderCalendar(currentMonth, currentYear);
+    }
+
+    function nextMonth() {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      renderCalendar(currentMonth, currentYear);
+    }
+
+    // بررسی روز انتخابی
+    function handleDayClick(dateObj) {
+      if (fortunes.length === 0) {
+        displayFortune("دیتابیس هنوز بارگذاری نشده.");
         return;
       }
 
-      // انتخاب فال تصادفی برای کاربر
-      const index = Math.floor(Math.random() * fortunes.length);
-      const fortune = fortunes[index];
-
-      // ذخیره در localStorage
-      localStorage.setItem("dailyFortune", JSON.stringify({
-        date: todayStr,
-        text: fortune
-      }));
-
-      document.getElementById("fortune").innerText = fortune;
+      if (dateObj <= today) {
+        // روز گذشته یا امروز → فال نمایش داده شود
+        const index = dateObj.getDate() % fortunes.length;
+        displayFortune(`فال ${dateObj.toLocaleDateString("fa-IR")}: ${fortunes[index]}`);
+      } else {
+        // روز آینده → پیام انتظار
+        const diffDays = Math.ceil((dateObj - today) / (1000 * 60 * 60 * 24));
+        displayFortune(`${diffDays} روز دیگر قابل مشاهده است`);
+      }
     }
   </script>
 </body>
